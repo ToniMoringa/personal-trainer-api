@@ -1,10 +1,14 @@
+import os
 from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from server.models import db, Exercise, Workout, WorkoutExercise
 from server.schemas import ExerciseSchema, WorkoutSchema, WorkoutExerciseSchema
 
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DB_PATH = os.path.join(os.path.dirname(BASE_DIR), 'instance', 'app.db')
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -15,7 +19,6 @@ workout_schema = WorkoutSchema()
 workouts_schema = WorkoutSchema(many=True)
 workout_exercise_schema = WorkoutExerciseSchema()
 
-# --- Workouts Endpoints ---
 @app.route('/workouts', methods=['GET'])
 def get_workouts():
     return jsonify(workouts_schema.dump(Workout.query.all())), 200
@@ -43,7 +46,6 @@ def delete_workout(id):
     db.session.commit()
     return jsonify({"message": "Workout deleted"}), 200
 
-# --- Exercises Endpoints ---
 @app.route('/exercises', methods=['GET'])
 def get_exercises():
     return jsonify(exercise_schema.dump(Exercise.query.all(), many=True)), 200
@@ -71,7 +73,6 @@ def delete_exercise(id):
     db.session.commit()
     return jsonify({"message": "Exercise deleted"}), 200
 
-# --- Join Table Endpoint ---
 @app.route('/workouts/<int:workout_id>/exercises/<int:exercise_id>/workout_exercises', methods=['POST'])
 def add_exercise_to_workout(workout_id, exercise_id):
     workout = Workout.query.get_or_404(workout_id)
